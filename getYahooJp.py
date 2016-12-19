@@ -8,8 +8,8 @@ from bs4 import BeautifulSoup
 
 i = 0
 while i < 20:
-
-	url = "http://auctions.search.yahoo.co.jp/search?p=ibanez&oq=&n=100&auccat=0&tab_ex=commerce&ei=UTF-8&b=101"
+	offset=(str)(i*101)
+	url = "http://auctions.search.yahoo.co.jp/search?p=ibanez&oq=&n=100&auccat=0&tab_ex=commerce&ei=UTF-8&b="+offset
 	print(url)
 	data = urllib.request.urlopen(url).read()
 	data = data.decode('UTF-8')
@@ -20,5 +20,5 @@ while i < 20:
 	#从文档中找到所有<a>标签的内容  
 	for link in body.find_all('h3'):  
 	    print(link.a.text)
-
+	i+=1
 #print(soup.head)
