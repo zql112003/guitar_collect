@@ -4,12 +4,13 @@
 
 #encoding:UTF-8
 import urllib.request
+import re
 from bs4 import BeautifulSoup
 
 i = 0
 while i < 20:
-	offset=(str)(i*101)
-	url = "http://auctions.search.yahoo.co.jp/search?p=ibanez&oq=&n=100&auccat=0&tab_ex=commerce&ei=UTF-8&b="+offset
+	offset=(str)(i*21)
+	url = "http://auctions.search.yahoo.co.jp/search?p=ibanez&oq=&n=20&auccat=0&tab_ex=commerce&ei=UTF-8&b="+offset
 	print(url)
 	data = urllib.request.urlopen(url).read()
 	data = data.decode('UTF-8')
@@ -17,8 +18,38 @@ while i < 20:
 	soup = BeautifulSoup(data,'html5lib')
 	body = soup.body
 
-	#从文档中找到所有<a>标签的内容  
-	for link in body.find_all('h3'):  
-	    print(link.a.text)
-	i+=1
-#print(soup.head)
+	
+	#need 5 list to save to mysql
+	auctionid_list=[]
+	img_list=[]
+	title_list =[]
+	paimaijia_list =[]
+	yikoujia_list =[]
+	endtime_list =[]
+	#从文档中找到所有<td class='i'>标签的内容  
+	for link in body.findAll('td','a1'):
+	    auctionid_list.append(link.find('h3').a.attrs['href'].split('/')[5:])
+	    #print(link.find('h3').a.attrs['href'].split('/')[5:])
+	
+
+	for link in body.findAll('td','i'):
+	    img_list.append(link.find('img'))
+	
+	for link in body.findAll('td','a1'):
+	    title_list.append(link.find('h3').a.text)
+	    print(link.find('h3').a.attrs['href'].split('/')[5:])
+	
+	for link in body.findAll('td','pr1'):
+		#replace str
+	    paimaijia_list.append(link.text.replace('Yahoo!かんたん決済',''))
+	    
+	
+	for link in body.findAll('td','pr2'):
+	    yikoujia_list.append(link.text)
+	
+
+	for link in body.findAll('td','ti'):
+	    endtime_list.append(link.text.replace('時間','小时'))
+	    #print(link.text.replace('時間','小时'))
+			
+	i=21
