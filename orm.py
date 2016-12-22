@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-__author__ = 'Michael Liao'
-
 import asyncio, logging
 
 import aiomysql
@@ -25,6 +23,13 @@ async def create_pool(loop, **kw):
         minsize=kw.get('minsize', 1),
         loop=loop
     )
+
+@asyncio.coroutine
+async def destory_pool(): #销毁连接池
+    global __pool
+    if __pool is not None:
+        __pool.close()
+        await  __pool.wait_closed()
 
 async def select(sql, args, size=None):
     log(sql, args)
@@ -214,6 +219,7 @@ class Model(dict, metaclass=ModelMetaclass):
         rows = await execute(self.__insert__, args)
         if rows != 1:
             logging.warn('failed to insert record: affected rows: %s' % rows)
+        return rows
 
     async def update(self):
         args = list(map(self.getValue, self.__fields__))
@@ -221,9 +227,11 @@ class Model(dict, metaclass=ModelMetaclass):
         rows = await execute(self.__update__, args)
         if rows != 1:
             logging.warn('failed to update by primary key: affected rows: %s' % rows)
+        return rows
 
     async def remove(self):
         args = [self.getValue(self.__primary_key__)]
         rows = await execute(self.__delete__, args)
         if rows != 1:
             logging.warn('failed to remove by primary key: affected rows: %s' % rows)
+        return rows

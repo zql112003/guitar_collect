@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>yahoo jp auctions - zhongquanliang Python Webapp</title>
+</head>
+<body>
+    <h1>Yahoo japan -guitar auctions</h1>
+    <table border="1" cellpadding="2" cellspacing="0">
+    <tr><th>商品标题</th><th>图片链接</th></tr>
+    {% for u in auctions %}
+
+    <tr><td>{{ u.title }} </td><td> {{ u.img_url }}</td></tr>
+    {% endfor %}
+    </table>
+</body>
+</html>
