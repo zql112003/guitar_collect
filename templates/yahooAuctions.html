@@ -1,0 +1,47 @@
+{% extends '__base__.html' %}
+
+{% block title %}Sylar Zhong's Python Web{% endblock %}
+
+{% block beforehead %}
+
+<script>
+</script>
+
+{% endblock %}
+
+{% block content %}
+
+    <div class="uk-width-medium-3-4">
+    <!-- {% for blog in blogs %}
+        <article class="uk-article">
+            <h2><a href="/blog/{{ blog.id }}">{{ blog.name }}</a></h2>
+            <p class="uk-article-meta">发表于{{ blog.created_at|datetime }}</p>
+            <p>{{ blog.summary }}</p>
+            <p><a href="/blog/{{ blog.id }}">继续阅读 <i class="uk-icon-angle-double-right"></i></a></p>
+        </article>
+        <hr class="uk-article-divider"> 
+    {% endfor %} -->
+
+        <h1>Yahoo japan -guitar auctions</h1>
+            <table border="1" cellpadding="2" cellspacing="0" width="'60%">
+                <tr><th>商品标题</th><th>图片链接</th></tr>
+                {% for u in auctions %}
+
+                <tr><td>{{ u.title }} </td><td> {{ u.img_url }}</td></tr>
+                {% endfor %}
+            </table>
+    </div>
+
+    <div class="uk-width-medium-1-4">
+        <div class="uk-panel uk-panel-header">
+            <h3 class="uk-panel-title">友情链接</h3>
+            <ul class="uk-list uk-list-line">
+                <li><i class="uk-icon-thumbs-o-up"></i> <a target="_blank" href="https://github.com/zql112003/">编程</a></li>
+                <li><i class="uk-icon-thumbs-o-up"></i> <a target="_blank" href="https://github.com/zql112003/">读书</a></li>
+                <li><i class="uk-icon-thumbs-o-up"></i> <a target="_blank" href="https://github.com/zql112003/">Python教程</a></li>
+                <li><i class="uk-icon-thumbs-o-up"></i> <a target="_blank" href="https://github.com/zql112003/">Git教程</a></li>
+            </ul>
+        </div>
+    </div>
+
+{% endblock %}
