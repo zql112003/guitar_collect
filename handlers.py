@@ -5,7 +5,7 @@ __author__ = 'Michael Liao'
 
 ' url handlers '
 
-import re, time, json, logging, hashlib, base64, asyncio
+import re,sys, time, json, logging, hashlib, base64, asyncio
 
 import markdown2
 
@@ -13,7 +13,10 @@ from aiohttp import web
 
 from coroweb import get, post
 from apis import Page,APIValueError, APIResourceNotFoundError,APIPermissionError
+import urllib.request
 
+import orm
+from bs4 import BeautifulSoup
 
 from models import Auction,User, Comment, Blog, next_id
 from config import configs
@@ -306,3 +309,95 @@ async def api_delete_blog(request, *, id):
     blog = await Blog.find(id)
     await blog.remove()
     return dict(id=id)
+
+
+
+@get('/api/pull_auctions')
+async def api_pull_auction():
+    p = 0
+    new_pull_num =0
+    while p < 20:
+        offset=(str)(p*100+1)
+        url = "http://auctions.search.yahoo.co.jp/search?fr=auc_top&p=ibanez&oq=&auccat=0&tab_ex=commerce&sc_i=&ei=UTF-8&b="+offset
+        print(url)
+        data = urllib.request.urlopen(url).read()
+        data = data.decode('UTF-8')
+
+        soup = BeautifulSoup(data,'html5lib')
+        body = soup.body
+
+	
+	    #need 5 list to save to mysql
+        auctionid_list=[]
+        img_list=[]
+        title_list =[]
+        paimaijia_list =[]
+        yikoujia_list =[]
+        endtime_list =[]
+            #从文档中找到所有<td class='i'>标签的内容  
+        for link in body.findAll('td','a1'):
+            auctionid_list.append(link.find('h3').a.attrs['href'].split('/')[5:])
+
+        for link in body.findAll('td','i'):
+            img_list.append(link.find('img').attrs["src"].replace('&dc=1&sr.fs=20000',''))
+	        #print(link.find('img').attrs["src"])
+	
+        for link in body.findAll('td','a1'):
+            title_list.append(link.find('h3').a.text)
+	        #print(link.find('h3').a.attrs['href'].split('/')[5:])
+	
+        for link in body.findAll('td','pr1'):
+            #replace str
+            paimaijia_list.append(link.text.replace('Yahoo!かんたん決済','').replace('送料無料',''))
+	    
+	
+        for link in body.findAll('td','pr2'):
+            yikoujia_list.append(link.text)
+	
+
+        for link in body.findAll('td','ti'):
+            endtime_list.append(link.text.replace('時間','小时'))
+
+    
+        for i in range(len(img_list)):
+            auctionid=auctionid_list[i] if any(auctionid_list[i]) else ' '
+            img=img_list[i] if any(img_list[i]) else ' '
+            title=title_list[i] if any(title_list[i]) else '---------'
+            paimaijia =paimaijia_list[i] if any(paimaijia_list[i]) else ' '
+            yikoujia = yikoujia_list[i] if any(yikoujia_list[i]) else ' '
+            endtime = endtime_list[i] if any(endtime_list[i]) else ' '
+            #if not exist auction_no
+            num = await Auction.findNumber('count(id)',' auction_no=%s',(auctionid,))
+            if num>0:
+                auction_no=str(auctionid)
+                logging.info('find auction_no already exists...'+auction_no)
+            else:
+                logging.info('find auction_no no exists...insert')
+                auction=Auction(auction_no=auctionid,img_url=img,title=title,paimai_price=paimaijia,yikoujia=yikoujia,endtime=endtime)
+                #print('auctionid=%s,img=%s,title=%s,paimaijia=%s,yikoujia=%s,endtime=%s' %(auctionid,img,title,paimaijia,yikoujia,endtime))
+                await auction.save()
+                new_pull_num=new_pull_num+1
+		
+
+
+        p=p+1
+    return dict(msg='yahoo pull end',new_pull_num=new_pull_num)
+
+
+@get('/manage/auctions')
+def manage_auctions(*, page='1'):
+    return {
+        '__template__': 'manage_auctions.html',
+        'page_index': get_page_index(page)
+    }
+
+
+@get('/api/auctions')
+async def api_auctions(*, page='1'):
+    page_index = get_page_index(page)
+    num = await Auction.findNumber('count(id)')
+    p = Page(num, page_index)
+    if num == 0:
+        return dict(page=p, auctions=())
+    auctions = await Auction.findAll(orderBy='id', limit=(p.offset, p.limit))
+    return dict(page=p, auctions=auctions)
